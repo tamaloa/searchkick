@@ -18,7 +18,7 @@ module Searchkick
         :fields, :highlight, :includes, :index_name, :indices_boost, :limit, :load,
         :match, :misspellings, :offset, :operator, :order, :padding, :page, :per_page, :profile,
         :request_params, :routing, :select, :similar, :smart_aggs, :suggest, :track, :type, :where,
-        :custom_query_options]
+        :custom_query_options, :cross_fields]
       raise ArgumentError, "unknown keywords: #{unknown_keywords.join(", ")}" if unknown_keywords.any?
 
       term = term.to_s
@@ -227,6 +227,37 @@ module Searchkick
               min_doc_freq: 1,
               min_term_freq: 1,
               analyzer: "searchkick_search2"
+            }
+          }
+        elsif options[:cross_fields]
+          #for each custom_query_options generate a multi_match query
+          queries = []
+          options[:custom_query_options]=[{analyzer: 'searchkick_search'}, {analyzer: 'searchkick_search2'}] if options[:custom_query_options].nil?
+          options[:custom_query_options].each do |co|
+            query = {
+              multi_match: {
+                query: term,
+                type: "cross_fields"
+              }
+            }
+            query[:multi_match][:fields] = []
+            query[:multi_match][:analyzer] = co[:analyzer] if co[:analyzer]
+            query[:multi_match][:operator] = co[:operator] if co[:operator]
+            query[:multi_match][:minimum_should_match] = co[:minimum_should_match] if co[:minimum_should_match]
+
+            fields.each do |field|
+              if field.end_with?(".exact") || field.end_with?(".custom")
+                f = field.split(".")[0..-2].join(".")
+              else
+                f = field
+              end
+              query[:multi_match][:fields] << f
+            end
+            queries << query
+          end
+          payload = {
+            bool: {
+              should: queries
             }
           }
         elsif all

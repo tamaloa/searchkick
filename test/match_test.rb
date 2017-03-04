@@ -253,4 +253,17 @@ class MatchTest < Minitest::Test
     store_names ["Ice Cream Cake"]
     assert_search "🍨🍰", ["Ice Cream Cake"], emoji: true
   end
+
+  def test_cross_fields
+    store [
+      {name: "Gymboree Dinobot Boys' Tshirt", color: "white"},
+      {name: "Gymboree Dinomite Boys' Tshirt", color: "blue"},
+      {name: "Disney Pete's Dragon Little Boys Tshirt", color: "grey"},
+      {name: "Disney Mickey Mouse Boys' TShirt", color: "red"},
+      {name: "Disney Minnie Mouse Boys' TShirt", color: "white"},
+    ]
+    assert_search "white tshirt", ["Gymboree Dinobot Boys' Tshirt", "Disney Minnie Mouse Boys' TShirt"], {fields: ['name', 'color'], custom_query_options: [{analyzer: 'searchkick_word_search',"operator":"and"}, {analyzer: 'searchkick_search2',"operator":"and"}], cross_fields: true}
+
+    assert_search "blue tshirts", ["Gymboree Dinomite Boys' Tshirt"], {fields: ['name', 'color'], custom_query_options: [{analyzer: 'searchkick_word_search',"operator":"and"}, {analyzer: 'searchkick_search2',"operator":"and"}], cross_fields: true}
+  end
 end
