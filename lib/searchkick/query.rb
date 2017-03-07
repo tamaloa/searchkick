@@ -246,12 +246,14 @@ module Searchkick
             query[:multi_match][:minimum_should_match] = co[:minimum_should_match] if co[:minimum_should_match]
 
             fields.each do |field|
+
+              factor = boost_fields[field] || 1
               if field.end_with?(".exact") || field.end_with?(".custom")
                 f = field.split(".")[0..-2].join(".")
               else
                 f = field
               end
-              query[:multi_match][:fields] << f
+              query[:multi_match][:fields] << "#{f}^#{factor*10}"
             end
             queries << query
           end

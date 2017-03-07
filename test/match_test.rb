@@ -254,7 +254,8 @@ class MatchTest < Minitest::Test
     assert_search "🍨🍰", ["Ice Cream Cake"], emoji: true
   end
 
-  def test_cross_fields
+  #Tests for: multi_match query with cross_fields type
+  def test_cross_fields_simple
     store [
       {name: "Gymboree Dinobot Boys' Tshirt", color: "white"},
       {name: "Gymboree Dinomite Boys' Tshirt", color: "blue"},
@@ -265,5 +266,17 @@ class MatchTest < Minitest::Test
     assert_search "white tshirt", ["Gymboree Dinobot Boys' Tshirt", "Disney Minnie Mouse Boys' TShirt"], {fields: ['name', 'color'], custom_query_options: [{analyzer: 'searchkick_word_search',"operator":"and"}, {analyzer: 'searchkick_search2',"operator":"and"}], cross_fields: true}
 
     assert_search "blue tshirts", ["Gymboree Dinomite Boys' Tshirt"], {fields: ['name', 'color'], custom_query_options: [{analyzer: 'searchkick_word_search',"operator":"and"}, {analyzer: 'searchkick_search2',"operator":"and"}], cross_fields: true}
+  end
+
+  def test_cross_fields_boost
+    store [
+      {name: "Gymboree Dinobot Boys' Tshirt", color: "white"},
+      {name: "Gymboree Dinomite Boys' Tshirt", color: "blue"},
+      {name: "Disney Pete's Dragon Little Boys Tshirt", color: "grey"},
+      {name: "Disney Baby Boys Grey Mickey Mouse Red White and COOL! TShirt", color: "grey"},
+      {name: "Disney Minnie Mouse Boys' TShirt", color: "white"},
+    ]
+    assert_order "white tshirt", ["Disney Baby Boys Grey Mickey Mouse Red White and COOL! TShirt", "Gymboree Dinobot Boys' Tshirt", "Disney Minnie Mouse Boys' TShirt"], {fields: ['name^50', 'color'], custom_query_options: [{analyzer: 'searchkick_word_search',"operator":"and"}, {analyzer: 'searchkick_search2',"operator":"and"}], cross_fields: true}
+
   end
 end
